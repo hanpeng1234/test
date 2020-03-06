@@ -156,16 +156,16 @@ if __name__ == "__main__":
     user= "postgres"
     password="vHeqPwro2HriV7CrM8Wh"
     for row in tableList:
-        tableNm=row["tableNm"]
-        lowerBound=row["lowerBound"]
-        upperBound=row["upperBound"]
-        df = spark.read.format("jdbc").option("url", url).option("user", user).option("password", password).option("partitionColumn", "id").option("dbtable", tableNm).option("lowerBound", lowerBound).option("upperBound", upperBound).option("numPartitions", 1000).load()
+        tablenm=row["tablenm"]
+        lowerbound=row["lowerbound"]
+        upperbound=row["upperbound"]
+        df = spark.read.format("jdbc").option("url", url).option("user", user).option("password", password).option("partitionColumn", "id").option("dbtable", tablenm).option("lowerBound", lowerbound).option("upperBound", upperbound).option("numPartitions", 1000).load()
         df.createOrReplaceTempView("t")
         bound = spark.sql("select max(id) max, min(id) min from t")
         max = bound.collect()[0].max
         min = bound.collect()[0].min
-        df_table = spark.read.format("jdbc").option("url", url).option("dbtable",  tableNm).option("user", user).option("password", password).option("partitionColumn", "id").option("lowerBound", min).option("upperBound", max).option("numPartitions", 1000).load()
+        df_table = spark.read.format("jdbc").option("url", url).option("dbtable",  tablenm).option("user", user).option("password", password).option("partitionColumn", "id").option("lowerBound", min).option("upperBound", max).option("numPartitions", 1000).load()
 #         示例目录
-        path="s3://rupiahplus-data-warehouse/aliyun/banda/"+tableNm
+        path="s3://rupiahplus-data-warehouse/aliyun/banda/"+tablenm
         df_table.write.mode("overwrite").orc(path)
     spark.stop()
