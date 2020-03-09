@@ -12,7 +12,7 @@ import pytz
 beforeyesterday=(datetime.now()+ timedelta(-1)).strftime('%Y-%m-%d')+" "+(datetime.now()-timedelta(minutes=60)).strftime('%H:00:00')
 yesterday=(datetime.now()).strftime('%Y-%m-%d')
 partitionlist=yesterday.split("-",3)
-yesterday=yesterday+" "+(datetime.now()+timedelta(minutes=60)).strftime('%H:00:00')
+yesterday=yesterday+" 23:59:59.999"
 
 
 # yesterday=(datetime.now()+ timedelta(-1)).strftime( '%Y-%m-%d')
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                 jsonDf = spark.read.format("orc").load( "hdfs:///table_s3_etl_tmp/")
                 jsonDf.write.mode("overwrite").partitionBy("year","month","day").orc(tablepath)
                 #add   partitions
-                partitionsql="ALTER TABLE "+databaseName+"_daily"+"."+tableName+"  ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[2] + ");"
+                partitionsql="ALTER TABLE "+databaseName+"_daily"+"."+tableName+"  ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[2] + ")"
                 spark.sql(partitionsql)
                 spark.catalog.dropTempView("tmp")
 

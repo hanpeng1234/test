@@ -40,7 +40,7 @@ guestTable = {"thirdparty":["select thirdparty_id, update_time, retry_times, cre
               "t_customer_app":"",
               "t_customer_device_info": "",
               "t_customer_install_info":"",
-			  "t_login_log":"",
+              "t_login_log":"",
               }
 # print(__name__)builtins
 if __name__ == "__main__":
@@ -54,58 +54,44 @@ if __name__ == "__main__":
         .getOrCreate()
     spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict");
     spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
-    databases = spark.sql("show databases")
-    databases = databases.collect()
-    for row in databases:
-        databaseName = row["databaseName"]
-        if databaseName != "" and databaseName in dbmap:
-#             print(databaseName)
-            databasesql = "show tables in " + databaseName
-            tables = spark.sql(databasesql)
-            tablelist = tables.collect();
-            for row in tablelist:
-                tableName = row["tableName"]
-#                 print(tableName)
-                if tableName !="" and tableName in guestTable:
-                    if tableName=="thirdparty":
-                        sql=guestTable[tableName][0]+" thirdparty_etl.thirdparty_t_task "+guestTable[tableName][1]
-                        guestPath = "s3://rupiahplus-data-warehouse/stream/" + databaseName + "_etl/" + tableName
-                        spark.sql(sql).write.mode("overwrite").orc(guestPath)
-                    else :
-                        #先给banda加上今天的partitions
-                        tempDataBase = " banda_stream_etl_daily"
-                        guestPath = "s3://rupiahplus-data-warehouse/stream/" + databaseName + "_etl/" + tableName
-                        spark.sql("ALTER TABLE  " + tempDataBase + "." + tableName + "  ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[2] + ")")
-                        spark.sql("ALTER TABLE  " + tempDataBase + "." + tableName + "  ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[3] + ")")
-                        if tableName=="t_customer":
-                            sql = "select * from  "+tempDataBase+"."+tableName
-                            spark.sql(sql).withColumn('mobile', F.sha2(F.col('mobile'), 256)).drop('imei').drop('password').drop('etldate').write.mode("overwrite").partitionBy("year","month","day").orc(guestPath)
-                        elif tableName=="t_loan_app":
-                            sql = "select * from  " + tempDataBase + "." + tableName
-                            spark.sql(sql).drop('credential_no').drop('etldate').write.mode("overwrite").partitionBy("year","month","day").orc(guestPath)
-                        elif tableName=="t_personal_info":
-                            sql = guestTable[tableName][0]+tempDataBase+"."+tableName
-                            spark.sql(sql).drop('credential_no').drop('etldate').write.mode("overwrite").orc(guestPath)
-                        elif tableName == "t_auto_review_loan":
-                            sql = "select * from  " + tempDataBase + "." + tableName
-                            spark.sql(sql).drop('name').drop('etldate').write.mode("overwrite").partitionBy("year","month","day").orc(guestPath)
-                        elif tableName == "t_lpay_deposit":
-                            sql = "select *  from  " + tempDataBase + "." + tableName
-                            spark.sql(sql).drop('name').drop("deposit_method").drop("deposit_channel").drop("out_deposit_no").drop("payment_code").drop('etldate').write.mode("overwrite").partitionBy("year","month","day").orc(guestPath)
-                        elif tableName == "t_thirdparty_data":
-                            sql = guestTable[tableName][0] + tempDataBase + "." + tableName+guestTable[tableName][1]
-                            spark.sql(sql).drop('etldate').write.mode("overwrite").partitionBy("year","month","day").orc(guestPath)
-                        elif tableName == "t_contact":
-                            # 先给t_customer加上今天的partitions
-                            spark.sql("ALTER TABLE  " + tempDataBase + ".t_customer  ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[2] + ")")
-                            sql = guestTable[tableName][0]+tempDataBase+"."+tableName+guestTable[tableName][1]+tempDataBase+".t_customer "+guestTable[tableName][2]
-                            spark.sql(sql).drop('etldate').write.mode("overwrite").orc(guestPath)
-                        elif tableName == "t_record_personal_info":
-                            sql = "select * from  " + tempDataBase + "." + tableName
-                            spark.sql(sql).drop('credential_no').drop('etldate').write.mode("overwrite").partitionBy("year","month","day").orc(guestPath)
-						 elif tableName == "t_login_log":
-                            sql = "select * from  " + tempDataBase + "." + tableName
-                            spark.sql(sql).drop('mobile').write.mode("overwrite").partitionBy("year","month","day").orc(guestPath)
-                        else :
-                            sql = "select * from  " + tempDataBase + "." + tableName
-                            spark.sql(sql).drop('etldate').write.mode("overwrite").partitionBy("year","month","day").orc(guestPath)
+    for row in guestTable:
+        tableName = row
+        if tableName=="thirdparty":
+            sql=guestTable[tableName][0]+" thirdparty_etl.thirdparty_t_task "+guestTable[tableName][1]
+            guestPath = "s3://rupiahplus-data-warehouse/stream/" + "banda_guest_etl/" + tableName
+            spark.sql(sql).write.mode("overwrite").orc(guestPath)
+        else :
+            #先给banda加上今天的partitions
+            tempDataBase = " banda_stream_etl_daily"
+            guestPath = "s3://rupiahplus-data-warehouse/stream/" +  "banda_guest_etl/" + tableName
+            if tableName=="t_customer":
+                sql = "select * from  "+tempDataBase+"."+tableName
+                spark.sql(sql).withColumn('mobile', F.sha2(F.col('mobile'), 256)).drop('imei').drop('password').drop('etldate').write.mode("overwrite").orc(guestPath)
+            elif tableName=="t_loan_app":
+                sql = "select * from  " + tempDataBase + "." + tableName
+                spark.sql(sql).drop('credential_no').drop('etldate').write.mode("overwrite").orc(guestPath)
+            elif tableName=="t_personal_info":
+                sql = guestTable[tableName][0]+tempDataBase+"."+tableName
+                spark.sql(sql).drop('credential_no').drop('etldate').write.mode("overwrite").orc(guestPath)
+            elif tableName == "t_auto_review_loan":
+                sql = "select * from  " + tempDataBase + "." + tableName
+                spark.sql(sql).drop('name').drop('etldate').write.mode("overwrite").orc(guestPath)
+            elif tableName == "t_lpay_deposit":
+                sql = "select *  from  " + tempDataBase + "." + tableName
+                spark.sql(sql).drop('name').drop("deposit_method").drop("deposit_channel").drop("out_deposit_no").drop("payment_code").drop('etldate').write.mode("overwrite").orc(guestPath)
+            elif tableName == "t_thirdparty_data":
+                sql = guestTable[tableName][0] + tempDataBase + "." + tableName+guestTable[tableName][1]
+                spark.sql(sql).drop('etldate').write.mode("overwrite").orc(guestPath)
+            elif tableName == "t_contact":
+                # 先给t_customer加上今天的partitions
+                sql = guestTable[tableName][0]+tempDataBase+"."+tableName+guestTable[tableName][1]+tempDataBase+".t_customer "+guestTable[tableName][2]
+                spark.sql(sql).drop('etldate').write.mode("overwrite").orc(guestPath)
+            elif tableName == "t_record_personal_info":
+                sql = "select * from  " + tempDataBase + "." + tableName
+                spark.sql(sql).drop('credential_no').drop('etldate').write.mode("overwrite").orc(guestPath)
+            elif tableName == "t_login_log":
+                sql = "select * from  " + tempDataBase + "." + tableName
+                spark.sql(sql).drop('mobile').drop('etldate').write.mode("overwrite").orc(guestPath)
+            else :
+                sql = "select * from  " + tempDataBase + "." + tableName
+                spark.sql(sql).drop('etldate').write.mode("overwrite").orc(guestPath)
