@@ -36,8 +36,8 @@ if __name__ == "__main__":
     databases = databases.collect()
     tablelist=["`banda-etl-s3`.`t_customer`","`banda-etl-s3`.`t_customer_install_info`","`banda-etl-s3`.`t_whitelist_old_customer`","`banda-etl-s3`.`t_loan_app`","`banda-etl-s3`.`t_loan_app_status_log`","`banda-etl-s3`.`t_lpay`",
                "`banda-etl-s3`.`t_record_personal_info`","`banda-etl-s3`.`t_record_employment`","`banda-etl-s3`.`t_record_contact`","`banda-etl-s3`.`t_record_file`"];
-    partitionsql_1=   "ALTER TABLE  #table# ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[2] + ");"
-    partitionsql_2=   "ALTER TABLE  #table# ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[3] + ");"
+#    partitionsql_1=   "ALTER TABLE  #table# ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[2] + ");"
+#    partitionsql_2=   "ALTER TABLE  #table# ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[3] + ");"
 #     for  row in tablelist:
 #         #添加分区 
 # #       spark.sql(partitionsql)

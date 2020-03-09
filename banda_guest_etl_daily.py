@@ -58,12 +58,12 @@ if __name__ == "__main__":
         tableName = row
         if tableName=="thirdparty":
             sql=guestTable[tableName][0]+" thirdparty_etl.thirdparty_t_task "+guestTable[tableName][1]
-            guestPath = "s3://rupiahplus-data-warehouse/stream/" + "banda_guest_etl/" + tableName
+            guestPath = "s3://rupiahplus-data-warehouse/etl/banda/guest/" + tableName
             spark.sql(sql).write.mode("overwrite").orc(guestPath)
         else :
             #先给banda加上今天的partitions
-            tempDataBase = " banda_stream_etl_daily"
-            guestPath = "s3://rupiahplus-data-warehouse/stream/" +  "banda_guest_etl/" + tableName
+            tempDataBase = " `banda-etl-s3`"
+            guestPath = "s3://rupiahplus-data-warehouse/etl/banda/guest/" + tableName
             if tableName=="t_customer":
                 sql = "select * from  "+tempDataBase+"."+tableName
                 spark.sql(sql).withColumn('mobile', F.sha2(F.col('mobile'), 256)).drop('imei').drop('password').drop('etldate').write.mode("overwrite").orc(guestPath)

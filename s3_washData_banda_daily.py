@@ -17,7 +17,7 @@ yesterday=yesterday+" 23:59:59.999"
 
 # yesterday=(datetime.now()+ timedelta(-1)).strftime( '%Y-%m-%d')
 # beforeyesterday=(datetime.now()+ timedelta(-2)).strftime( '%Y-%m-%d')
-dbmap={"banda_stream_etl":"1"} 
+dbmap={"banda_stream_etl":"banda"} 
 
 # "luzon_stream_etl":"1" ,
 
@@ -66,11 +66,12 @@ if __name__ == "__main__":
                 sql="desc " +databaseName+"."+tableName;
                 tableSchema= spark.sql(sql).collect()
                 colum=getTableColum(tableSchema)
-                tablepath="s3://rupiahplus-data-warehouse/stream/"+databaseName+"daily/"+row["tableName"]
-                hissql="select etldate,0 as etlindex,  "+colum+" year,month,day"+" ,'insert' as kind from "+ databaseName+"_daily"+"."+tableName
+                tablepath="s3://rupiahplus-data-warehouse/aliyun/"+dbmap[databaseName]+"/"+row["tableName"]
+                #tablepath="s3://rupiahplus-data-warehouse/stream/"+databaseName+"daily/"+row["tableName"]
+                hissql="select etldate,0 as etlindex,  "+colum+" year,month,day"+" ,'insert' as kind from `"+ dbmap[databaseName]+"-etl-s3`"+"."+tableName
                 sql="select etldate,etlindex,  "+colum+" year,month,day"+" ,kind from "+ databaseName+"."+tableName+nowsql_2
                 nowdata=spark.sql(sql)
-                spark.catalog.refreshTable(databaseName+"_daily"+"."+tableName)
+                spark.catalog.refreshTable("`"+dbmap[databaseName]+"-etl-s3`"+"."+tableName)
                 hisdata =spark.sql(hissql)
                 hisdata.union(nowdata).createOrReplaceTempView("tmp");
                 sql1="select etldate,etlindex," +colum+partitionstr+ tablesql_1 +" tmp "+ tablesql_2 
@@ -79,7 +80,7 @@ if __name__ == "__main__":
                 jsonDf = spark.read.format("orc").load( "hdfs:///table_s3_etl_tmp/")
                 jsonDf.write.mode("overwrite").partitionBy("year","month","day").orc(tablepath)
                 #add   partitions
-                partitionsql="ALTER TABLE "+databaseName+"_daily"+"."+tableName+"  ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[2] + ")"
+                partitionsql="ALTER TABLE `"+dbmap[databaseName]+"-etl-s3`"+"."+tableName+"  ADD IF NOT EXISTS PARTITION (year=" +partitionlist[0] + ",month=" + partitionlist[1] + ",day=" + partitionlist[2] + ")"
                 spark.sql(partitionsql)
                 spark.catalog.dropTempView("tmp")
 
